@@ -1,0 +1,167 @@
+{% extends 'galeri/base.html' %}
+{% load static %}
+{% load l10n %}
+{% load humanize %}
+{% block title %}Oto Galeri | Anasayfa{% endblock %}
+
+{% block content %}
+    <!-- Hero Section with Vanta overlay -->
+    <section class="relative h-screen flex items-center justify-center text-white overflow-hidden" id="hero">
+        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div class="relative z-10 text-center px-6">
+            <h1 class="hero-text text-4xl md:text-6xl font-bold mb-6">Hayalinizdeki Lüksü Keşfedin</h1>
+            <p class="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">Özenle seçilmiş lüks araçlar, ayrıcalıklı hizmet anlayışıyla.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'araclar_listesi' %}" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full transition-smooth">Envanteri İncele</a>
+                <a href="#iletisim" class="bg-transparent border-2 border-white hover:bg-white hover:text-black font-bold py-3 px-8 rounded-full transition-smooth">Test Sürüşü</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Vehicles -->
+    <section class="py-20 bg-white bg-opacity-90" id="araclar">
+        <div class="max-w-[1200px] mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Öne Çıkan Araçlar</h2>
+                <div class="w-20 h-1 bg-yellow-500 mx-auto mt-4"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {% for arac in araclar %}
+                <div class="car-card bg-white rounded-xl overflow-hidden shadow-lg transition-smooth cursor-pointer" onclick="window.location.href='{% url 'arac_detay' arac.id %}'">
+                    <div class="relative h-64 overflow-hidden">
+                        {% if arac.get_ana_foto_url %}
+                            <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka }} {{ arac.model }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-gray-500">Fotoğraf Yok</span>
+                            </div>
+                        {% endif %}
+                        {% if arac.durum == 'yeni' %}
+                        <div class="absolute top-4 right-4 bg-yellow-500 text-black font-bold px-3 py-1 rounded-full text-sm">YENİ</div>
+                        {% elif arac.durum == 'firsat' %}
+                        <div class="absolute top-4 right-4 bg-red-500 text-white font-bold px-3 py-1 rounded-full text-sm">FIRSAT</div>
+                        {% endif %}
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ arac.marka }} {{ arac.model }}</h3>
+                        <div class="flex items-center text-gray-600 mb-4">
+                            <i data-feather="map-pin" class="w-4 h-4 mr-1"></i>
+                            <span>Hemen teslim</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-gray-900">{{ arac.fiyat|intcomma }} TL</span>
+                            <a href="{% url 'arac_detay' arac.id %}" class="text-yellow-600 hover:text-yellow-700 font-semibold">Detay →</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal" id="arac-{{ forloop.counter }}" aria-hidden="true" role="dialog" aria-modal="true">
+                    <div class="modal-backdrop" data-modal-close></div>
+                    <div class="modal-content" role="document">
+                        <button class="modal-close" aria-label="Kapat" data-modal-close>&times;</button>
+                        {% if arac.get_ana_foto_url %}
+                            <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka }} {{ arac.model }}" class="w-full h-auto rounded-md">
+                        {% endif %}
+                        <h3 class="text-2xl font-semibold mt-3">{{ arac.marka }} {{ arac.model }}</h3>
+                        <p>Yıl: {{ arac.yil }} | Fiyat: {{ arac.fiyat|intcomma }} TL</p>
+                        <p>{{ arac.aciklama }}</p>
+                        
+                        <!-- Detay Sayfasına Git Butonu -->
+                        <div class="mt-6">
+                            <a href="{% url 'arac_detay' arac.id %}" class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg text-center transition-colors">
+                                Detay Sayfasına Git →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p>Hiç araç bulunamadı.</p>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-12">
+                <a href="{% url 'araclar_listesi' %}" class="border-2 border-black hover:bg-black hover:text-white font-bold py-3 px-8 rounded-full transition-smooth">Tüm Envanteri Gör</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services -->
+    <section class="py-20 bg-gray-900 text-white" id="hakkimizda">
+        <div class="max-w-[1200px] mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold">Premium Hizmetler</h2>
+                <div class="w-20 h-1 bg-yellow-500 mx-auto mt-4"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div class="text-center p-8 bg-gray-800 rounded-xl hover:bg-gray-700 transition-smooth">
+                    <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="repeat" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Takas Değeri</h3>
+                    <p class="text-gray-300">Aracınız için şeffaf, adil piyasa değeri tespiti.</p>
+                </div>
+                <div class="text-center p-8 bg-gray-800 rounded-xl hover:bg-gray-700 transition-smooth">
+                    <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="dollar-sign" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Finansman</h3>
+                    <p class="text-gray-300">Size özel, rekabetçi oranlarla finansman çözümleri.</p>
+                </div>
+                <div class="text-center p-8 bg-gray-800 rounded-xl hover:bg-gray-700 transition-smooth">
+                    <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="shield" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Genişletilmiş Garanti</h3>
+                    <p class="text-gray-300">Yatırımınızı koruyan kapsamlı güvence paketleri.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 bg-yellow-600 text-white">
+        <div class="max-w-[1200px] mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">Lükse Hazır mısınız?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Kişiselleştirilmiş danışmanlık randevunuzu alın, hayalinizdeki araca birlikte ulaşalım.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#iletisim" class="bg-black hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full transition-smooth">Randevu Al</a>
+                <a href="tel:+902120000000" class="bg-white hover:bg-gray-100 text-black font-bold py-3 px-8 rounded-full transition-smooth">Ara: (0212) 000 00 00</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('search-form');
+    const input = document.getElementById('search-input');
+    const cards = Array.from(document.querySelectorAll('.arac-karti'));
+    const chips = Array.from(document.querySelectorAll('.filter-chip'));
+
+    function applyFilters(){
+        const q = (input.value || '').toLowerCase();
+        const active = chips.find(c => c.getAttribute('aria-pressed') === 'true');
+        const tag = active ? active.dataset.filter : 'all';
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            const matchText = !q || text.includes(q);
+            const matchTag = tag === 'all' || (card.dataset.tags || '').includes(tag);
+            card.style.display = (matchText && matchTag) ? '' : 'none';
+        });
+    }
+
+    if(form){
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            applyFilters();
+        });
+        input.addEventListener('input', applyFilters);
+    }
+
+    chips.forEach(chip => chip.addEventListener('click', function(){
+        chips.forEach(c => c.setAttribute('aria-pressed','false'));
+        chip.setAttribute('aria-pressed','true');
+        applyFilters();
+    }));
+});
+</script>
+{% endblock %}

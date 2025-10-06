@@ -1,0 +1,227 @@
+{% extends 'galeri/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load l10n %}
+{% block title %}Tüm Araçlar - Oto Galeri{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'anasayfa' %}" class="hover:text-yellow-600">Anasayfa</a></li>
+            <li><i data-feather="chevron-right" class="w-4 h-4"></i></li>
+            <li class="text-gray-900">Tüm Araçlar</li>
+        </ol>
+    </nav>
+
+    <!-- Başlık -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Tüm Araçlar</h1>
+        <p class="text-gray-600">Toplam {{ page_obj.paginator.count }} araç bulundu</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Filtreler Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+                <h3 class="text-lg font-semibold mb-6">Filtreler</h3>
+                
+                <form method="get" id="filter-form" class="space-y-6">
+                    <!-- Arama -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Arama</label>
+                        <input type="text" name="arama" value="{{ current_filters.arama }}" 
+                               placeholder="Marka, model ara..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                    </div>
+
+                    <!-- Marka -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Marka</label>
+                        <select name="marka" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <option value="">Tüm Markalar</option>
+                            {% for m in markalar %}
+                                <option value="{{ m }}" {% if current_filters.marka == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Model Yılı -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Model Yılı</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="yil_min" value="{{ current_filters.yil_min }}" 
+                                   placeholder="Min" min="1990" max="2024"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <input type="number" name="yil_max" value="{{ current_filters.yil_max }}" 
+                                   placeholder="Max" min="1990" max="2024"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                        </div>
+                    </div>
+
+                    <!-- Fiyat -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fiyat (TL)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="fiyat_min" value="{{ current_filters.fiyat_min }}" 
+                                   placeholder="Min" min="0"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <input type="number" name="fiyat_max" value="{{ current_filters.fiyat_max }}" 
+                                   placeholder="Max" min="0"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                        </div>
+                    </div>
+
+                    <!-- Durum -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Durum</label>
+                        <select name="durum" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <option value="">Tüm Durumlar</option>
+                            <option value="yeni" {% if current_filters.durum == 'yeni' %}selected{% endif %}>Yeni</option>
+                            <option value="firsat" {% if current_filters.durum == 'firsat' %}selected{% endif %}>Fırsat</option>
+                        </select>
+                    </div>
+
+                    <!-- Sıralama -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Sıralama</label>
+                        <select name="siralama" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <option value="ilan_tarihi" {% if current_filters.siralama == 'ilan_tarihi' %}selected{% endif %}>En Yeni İlanlar</option>
+                            <option value="fiyat_artan" {% if current_filters.siralama == 'fiyat_artan' %}selected{% endif %}>Fiyat (Düşük → Yüksek)</option>
+                            <option value="fiyat_azalan" {% if current_filters.siralama == 'fiyat_azalan' %}selected{% endif %}>Fiyat (Yüksek → Düşük)</option>
+                            <option value="yil_azalan" {% if current_filters.siralama == 'yil_azalan' %}selected{% endif %}>Model Yılı (Yeni → Eski)</option>
+                            <option value="yil_artan" {% if current_filters.siralama == 'yil_artan' %}selected{% endif %}>Model Yılı (Eski → Yeni)</option>
+                            <option value="marka" {% if current_filters.siralama == 'marka' %}selected{% endif %}>Marka (A → Z)</option>
+                        </select>
+                    </div>
+
+                    <!-- Butonlar -->
+                    <div class="space-y-3">
+                        <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            <i data-feather="search" class="w-4 h-4 inline mr-2"></i>
+                            Filtrele
+                        </button>
+                        <a href="{% url 'araclar_listesi' %}" class="block w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-center">
+                            <i data-feather="x" class="w-4 h-4 inline mr-2"></i>
+                            Filtreleri Temizle
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Araç Listesi -->
+        <div class="lg:col-span-3">
+            {% if page_obj %}
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {% for arac in page_obj %}
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                            <div class="relative h-64 overflow-hidden">
+                                {% if arac.get_ana_foto_url %}
+                                    <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka }} {{ arac.model }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                                        <span class="text-gray-500">Fotoğraf Yok</span>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Durum Etiketi -->
+                                {% if arac.durum == 'yeni' %}
+                                    <div class="absolute top-4 right-4 bg-yellow-500 text-black font-bold px-3 py-1 rounded-full text-sm">YENİ</div>
+                                {% elif arac.durum == 'firsat' %}
+                                    <div class="absolute top-4 right-4 bg-red-500 text-white font-bold px-3 py-1 rounded-full text-sm">FIRSAT</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ arac.marka }} {{ arac.model }}</h3>
+                                <div class="space-y-2 text-gray-600 mb-4">
+                                    <div class="flex items-center">
+                                        <i data-feather="calendar" class="w-4 h-4 mr-2"></i>
+                                        <span>{{ arac.yil }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-feather="clock" class="w-4 h-4 mr-2"></i>
+                                        <span>{{ arac.ilan_tarihi|date:"d.m.Y" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-2xl font-bold text-yellow-600">{{ arac.fiyat|intcomma }} TL</span>
+                                    <span class="text-sm text-gray-500">{{ arac.get_durum_display }}</span>
+                                </div>
+                                
+                                <a href="{% url 'arac_detay' arac.id %}" class="block w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-center transition-colors">
+                                    Detayları Gör
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Sayfalama -->
+                {% if page_obj.has_other_pages %}
+                    <div class="mt-12 flex justify-center">
+                        <nav class="flex items-center space-x-2">
+                            {% if page_obj.has_previous %}
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" 
+                                   class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
+                                    <i data-feather="chevron-left" class="w-4 h-4"></i>
+                                </a>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <span class="px-4 py-2 bg-yellow-600 text-white rounded-lg">{{ num }}</span>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" 
+                                       class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">{{ num }}</a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" 
+                                   class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
+                                    <i data-feather="chevron-right" class="w-4 h-4"></i>
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                {% endif %}
+
+            {% else %}
+                <!-- Sonuç Bulunamadı -->
+                <div class="text-center py-12">
+                    <i data-feather="search" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Araç Bulunamadı</h3>
+                    <p class="text-gray-600 mb-6">Arama kriterlerinize uygun araç bulunamadı. Filtreleri değiştirmeyi deneyin.</p>
+                    <a href="{% url 'araclar_listesi' %}" class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                        Tüm Araçları Gör
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.feather) {
+        window.feather.replace();
+    }
+    
+    // Filtre formunu otomatik gönder
+    const filterForm = document.getElementById('filter-form');
+    const selects = filterForm.querySelectorAll('select');
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+});
+</script>
+{% endblock %}
