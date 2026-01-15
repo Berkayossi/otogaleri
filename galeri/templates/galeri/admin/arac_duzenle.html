@@ -125,7 +125,7 @@
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
                     <option value="">Personel Seçin</option>
                     {% for personel in personeller %}
-                    <option value="{{ personel.id }}" {% if arac.personel and arac.personel.id == personel.id %} selected 
+                    <option value="{{ personel.id }}" {% if arac.personel and arac.personel.id == personel.id %} selected
                         {% endif %}>{{ personel.ad }} {{ personel.soyad }}</option>
                     {% endfor %}
                 </select>
@@ -268,5 +268,5 @@
     {% csrf_token %}
 </form>
 
-<script src="{% static 'galeri/admin.js' %}"></script>
+<script src="{% static 'galeri/js/admin.js' %}"></script>
 {% endblock %}
