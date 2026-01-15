@@ -1,0 +1,57 @@
+{% extends 'galeri/admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ arac.marka.ad }} {{ arac.model.ad }} Sil - Yönetici Paneli{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Araç Sil</h1>
+    <p class="text-gray-600">Bu işlem geri alınamaz</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto">
+    <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i data-feather="alert-triangle" class="w-10 h-10 text-red-600"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Bu aracı silmek istediğinizden emin misiniz?</h2>
+        <p class="text-gray-600">Bu işlem geri alınamaz ve tüm fotoğraflar da silinecektir.</p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-lg p-6 mb-8">
+        <div class="flex items-center space-x-4 mb-4">
+            {% if arac.get_ana_foto_url %}
+                <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka.ad }} {{ arac.model.ad }}" class="w-24 h-24 object-cover rounded-lg">
+            {% else %}
+                <div class="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i data-feather="image" class="w-12 h-12 text-gray-400"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">{{ arac.marka.ad }} {{ arac.model.ad }}</h3>
+                <p class="text-gray-600">Yıl: {{ arac.yil }} | Fiyat: {{ arac.fiyat|intcomma }} TL</p>
+                <p class="text-gray-600">Durum: 
+                    {% if arac.durum == 'yeni' %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Yeni</span>
+                    {% elif arac.durum == 'firsat' %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fırsat</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <form method="POST" class="flex justify-end space-x-4">
+        {% csrf_token %}
+        <a href="{% url 'admin_arac_listesi' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold">
+            İptal
+        </a>
+        <button type="submit" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-bold flex items-center space-x-2">
+            <i data-feather="trash-2" class="w-5 h-5"></i>
+            <span>Evet, Sil</span>
+        </button>
+    </form>
+</div>
+{% endblock %}
+

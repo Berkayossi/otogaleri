@@ -1,0 +1,45 @@
+{% extends 'galeri/admin/base.html' %}
+{% load static %}
+
+{% block title %}Personel Sil - Yönetici Paneli{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="p-8 text-center">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-feather="alert-triangle" class="w-10 h-10 text-red-600"></i>
+            </div>
+
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Personeli Silmek İstediğinize Emin misiniz?</h1>
+
+            <p class="text-gray-600 mb-8">
+                <span class="font-semibold text-gray-900">{{ personel.ad }} {{ personel.soyad }}</span> isimli personeli
+                silmek üzeresiniz.
+                Bu işlem geri alınamaz.
+            </p>
+
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-left">
+                <h3 class="font-semibold text-red-800 mb-2">Dikkat:</h3>
+                <p class="text-sm text-red-700">
+                    Eğer bu personelin üzerinde kayıtlı araçlar varsa, silme işlemi başarısız olabilir.
+                    Önce ilgili araçların personel bilgisini güncellemelisiniz.
+                </p>
+            </div>
+
+            <form method="POST" class="flex justify-center space-x-4">
+                {% csrf_token %}
+                <a href="{% url 'admin_personel_listesi' %}"
+                    class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold">
+                    İptal
+                </a>
+                <button type="submit"
+                    class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-bold flex items-center space-x-2">
+                    <i data-feather="trash-2" class="w-5 h-5"></i>
+                    <span>Evet, Sil</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

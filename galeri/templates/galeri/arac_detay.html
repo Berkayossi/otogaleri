@@ -1,0 +1,440 @@
+{% extends 'galeri/base.html' %}
+{% load static %}
+{% load l10n %}
+{% load humanize %}
+{% block title %}{{ arac.marka.ad }} {{ arac.model.ad }} - Oto Galeri{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'anasayfa' %}" class="hover:text-yellow-600">Anasayfa</a></li>
+            <li><i data-feather="chevron-right" class="w-4 h-4"></i></li>
+            <li><a href="{% url 'anasayfa' %}#araclar" class="hover:text-yellow-600">Araçlar</a></li>
+            <li><i data-feather="chevron-right" class="w-4 h-4"></i></li>
+            <li class="text-gray-900">{{ arac.marka.ad }} {{ arac.model.ad }}</li>
+        </ol>
+    </nav>
+
+    <!-- Ana İçerik -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- Fotoğraf Galerisi -->
+        <div class="space-y-4">
+            {% if arac.get_ana_foto_url %}
+            <!-- Ana Fotoğraf -->
+            <div class="relative">
+                <img id="ana-foto" src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka.ad }} {{ arac.model.ad }}"
+                    class="w-full h-96 object-cover rounded-xl shadow-lg cursor-pointer hover:opacity-90 transition-opacity">
+                {% if arac.durum == 'yeni' %}
+                <div class="absolute top-4 right-4 bg-yellow-500 text-black font-bold px-4 py-2 rounded-full text-sm">
+                    YENİ</div>
+                {% elif arac.durum == 'firsat' %}
+                <div class="absolute top-4 right-4 bg-red-500 text-white font-bold px-4 py-2 rounded-full text-sm">
+                    FIRSAT</div>
+                {% endif %}
+                <button id="open-gallery-btn"
+                    class="absolute bottom-4 left-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm hover:bg-opacity-80 transition-all">
+                    <i data-feather="zoom-in" class="w-4 h-4 inline mr-1"></i>
+                    Tüm fotoğrafları gör
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Thumbnail Galerisi -->
+            {% if arac.fotograflar.all %}
+            <div class="grid grid-cols-4 gap-2">
+                {% for foto in arac.fotograflar.all %}
+                <img src="{{ foto.fotoğraf.url }}"
+                    alt="{{ arac.marka.ad }} {{ arac.model.ad }} - Fotoğraf {{ foto.sıra }}"
+                    class="w-full h-20 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity foto-thumbnail"
+                    data-photo-url="{{ foto.fotoğraf.url }}" data-photo-index="{{ forloop.counter0 }}">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Araç Bilgileri -->
+        <div class="space-y-6">
+            <!-- Başlık ve Fiyat -->
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ arac.marka.ad }} {{ arac.model.ad }}</h1>
+                <p class="text-xl text-gray-600 mb-4">Model Yılı: {{ arac.yil }}</p>
+                <div class="text-4xl font-bold text-yellow-600 mb-6">{{ arac.ilan_fiyat|intcomma }} TL</div>
+            </div>
+
+            <!-- Temel Bilgiler -->
+            <div class="bg-gray-50 p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-4">Temel Bilgiler</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center">
+                        <i data-feather="calendar" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>Model Yılı:</strong> {{ arac.yil }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="tag" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>Durum:</strong> {{ arac.get_durum_display }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="clock" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>İlan Tarihi:</strong> {{ arac.ilan_tarihi|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="settings" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>Vites Tipi:</strong> {{ arac.get_vites_tipi_display }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="disc" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>Kilometre:</strong> {{ arac.kilometre | intcomma }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="zap" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>Motor Gücü:</strong> {{ arac.motor_gucu | intcomma }} HP</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="droplet" class="w-5 h-5 mr-3 text-gray-600"></i>
+                        <span><strong>Yakıt Tipi:</strong> {{ arac.get_yakit_tipi_display }}</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Açıklama -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Açıklama</h3>
+                <p class="text-gray-700 leading-relaxed">{{ arac.aciklama }}</p>
+            </div>
+
+            <!-- İletişim Butonları -->
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="tel:+902120000000"
+                        class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors">
+                        <i data-feather="phone" class="w-5 h-5 inline mr-2"></i>
+                        Hemen Ara
+                    </a>
+                    <a href="https://wa.me/902120000000"
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors">
+                        <i data-feather="message-circle" class="w-5 h-5 inline mr-2"></i>
+                        WhatsApp
+                    </a>
+                </div>
+
+                <button id="test-drive-btn"
+                    class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-6 rounded-xl transition-colors">
+                    <i data-feather="car" class="w-5 h-5 inline mr-2"></i>
+                    Test Sürüşü Talep Et
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benzer Araçlar -->
+    <div class="mt-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8">Benzer Araçlar</h2>
+        {% if benzer_araclar %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for benzer in benzer_araclar %}
+            <a href="{% url 'arac_detay' benzer.id %}" class="block group h-full">
+                <div
+                    class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                    <div class="relative h-48 bg-gray-200 overflow-hidden">
+                        {% if benzer.get_ana_foto_url %}
+                        <img src="{{ benzer.get_ana_foto_url }}" alt="{{ benzer.marka.ad }} {{ benzer.model.ad }}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                            <i data-feather="image" class="w-12 h-12"></i>
+                        </div>
+                        {% endif %}
+
+                        {% if benzer.durum == 'yeni' %}
+                        <span
+                            class="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">YENİ</span>
+                        {% elif benzer.durum == 'firsat' %}
+                        <span
+                            class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">FIRSAT</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3
+                                class="font-semibold text-lg text-gray-900 mb-1 group-hover:text-yellow-600 transition-colors">
+                                {{ benzer.marka.ad }} {{ benzer.model.ad }}</h3>
+                            <div class="flex items-center text-gray-500 text-sm mb-3">
+                                <i data-feather="calendar" class="w-4 h-4 mr-1"></i> {{ benzer.yil }}
+                                <span class="mx-2">•</span>
+                                <i data-feather="disc" class="w-4 h-4 mr-1"></i> {{ benzer.kilometre|intcomma }} km
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t pt-3 mt-2">
+                            <span class="text-yellow-600 font-bold text-lg">{{ benzer.ilan_fiyat|intcomma }} TL</span>
+                            <span class="text-xs text-gray-400">İncele <i data-feather="arrow-right"
+                                    class="w-3 h-3 inline ml-1"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-xl p-8 text-center border border-gray-100">
+            <div class="inline-flex items-center justify-center p-4 bg-gray-100 rounded-full mb-4">
+                <i data-feather="search" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Benzer Araç Bulunamadı</h3>
+            <p class="text-gray-500 mt-1">Şu anda bu fiyat aralığında başka araç bulunmamaktadır.</p>
+            <a href="{% url 'anasayfa' %}#araclar"
+                class="inline-flex items-center mt-4 text-yellow-600 hover:text-yellow-700 font-medium">
+                Tüm Araçlara Göz At <i data-feather="arrow-right" class="w-4 h-4 ml-1"></i>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tam Ekran Fotoğraf Galerisi Modal -->
+<div id="photo-gallery-modal" class="fixed inset-0 bg-black bg-opacity-95 z-50" style="display: none;">
+    <div class="flex items-center justify-center h-full relative">
+        <!-- Kapatma Butonu -->
+        <button id="close-gallery-btn" class="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+            aria-label="Kapat">
+            <i data-feather="x" class="w-8 h-8"></i>
+        </button>
+
+        <!-- Sol Ok -->
+        <button id="prev-photo-btn"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
+            aria-label="Önceki fotoğraf">
+            <i data-feather="chevron-left" class="w-12 h-12"></i>
+        </button>
+
+        <!-- Sağ Ok -->
+        <button id="next-photo-btn"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10"
+            aria-label="Sonraki fotoğraf">
+            <i data-feather="chevron-right" class="w-12 h-12"></i>
+        </button>
+
+        <!-- Ana Fotoğraf -->
+        <div class="max-w-7xl max-h-full mx-auto px-16">
+            <img id="gallery-main-photo" src="" alt="" class="max-w-full max-h-full object-contain">
+        </div>
+
+        <!-- Fotoğraf Sayacı -->
+        <div
+            class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-60 px-4 py-2 rounded-full">
+            <span id="photo-counter">1 / 1</span>
+        </div>
+
+        <!-- Thumbnail Bar -->
+        <div class="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2 max-w-4xl overflow-x-auto">
+            {% for foto in arac.fotograflar.all %}
+            <img src="{{ foto.fotoğraf.url }}" alt="Thumbnail {{ forloop.counter }}"
+                class="w-16 h-16 object-cover rounded cursor-pointer opacity-60 hover:opacity-100 transition-opacity gallery-thumbnail"
+                data-thumb-index="{{ forloop.counter0 }}" id="gallery-thumb-{{ forloop.counter0 }}">
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fotoğraf galerisi değişkenleri
+    let currentPhotoIndex = 0;
+    let photoUrls = [];
+
+    // Fotoğraf URL'lerini yükle
+    document.addEventListener('DOMContentLoaded', function () {
+        photoUrls = [
+            {% for foto in arac.fotograflar.all %}
+            '{{ foto.fotoğraf.url }}'{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+});
+
+    // Fotoğraf değiştirme fonksiyonu
+    function changeMainPhoto(photoUrl) {
+        document.getElementById('ana-foto').src = photoUrl;
+    }
+
+    // Fotoğraf galerisini aç
+    function openPhotoGallery(startIndex = 0) {
+        if (photoUrls.length === 0) return;
+
+        currentPhotoIndex = startIndex;
+        updateGalleryPhoto();
+        document.getElementById('photo-gallery-modal').style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Sayfa kaydırmayı durdur
+
+        // Feather ikonları yenile
+        if (window.feather) {
+            window.feather.replace();
+        }
+    }
+
+    // Fotoğraf galerisini kapat
+    function closePhotoGallery() {
+        document.getElementById('photo-gallery-modal').style.display = 'none';
+        document.body.style.overflow = 'auto'; // Sayfa kaydırmayı aktif et
+    }
+
+    // Önceki fotoğraf
+    function previousPhoto() {
+        if (photoUrls.length === 0) return;
+        currentPhotoIndex = (currentPhotoIndex - 1 + photoUrls.length) % photoUrls.length;
+        updateGalleryPhoto();
+    }
+
+    // Sonraki fotoğraf
+    function nextPhoto() {
+        if (photoUrls.length === 0) return;
+        currentPhotoIndex = (currentPhotoIndex + 1) % photoUrls.length;
+        updateGalleryPhoto();
+    }
+
+    // Belirli fotoğrafa git
+    function goToPhoto(index) {
+        if (photoUrls.length === 0) return;
+        currentPhotoIndex = index;
+        updateGalleryPhoto();
+    }
+
+    // Galeri fotoğrafını güncelle
+    function updateGalleryPhoto() {
+        const mainPhoto = document.getElementById('gallery-main-photo');
+        const counter = document.getElementById('photo-counter');
+
+        if (mainPhoto && photoUrls[currentPhotoIndex]) {
+            mainPhoto.src = photoUrls[currentPhotoIndex];
+            counter.textContent = `${currentPhotoIndex + 1} / ${photoUrls.length}`;
+
+            // Thumbnail'leri güncelle
+            document.querySelectorAll('[id^="gallery-thumb-"]').forEach((thumb, index) => {
+                thumb.classList.toggle('opacity-60', index !== currentPhotoIndex);
+                thumb.classList.toggle('ring-2', index === currentPhotoIndex);
+                thumb.classList.toggle('ring-white', index === currentPhotoIndex);
+            });
+        }
+    }
+
+    // Test sürüşü talep etme fonksiyonu
+    function requestTestDrive() {
+        const aracBilgi = "{{ arac.marka.ad }} {{ arac.model.ad }} ({{ arac.yil }})";
+        const message = `Merhaba, ${aracBilgi} için test sürüşü talep etmek istiyorum.`;
+        const whatsappUrl = `https://wa.me/902120000000?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    }
+
+
+    // Klavye navigasyonu
+    document.addEventListener('keydown', function (e) {
+        const modal = document.getElementById('photo-gallery-modal');
+        if (modal && modal.style.display === 'block') {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousPhoto();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextPhoto();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    closePhotoGallery();
+                    break;
+            }
+        }
+    });
+
+    // Mouse ile kaydırma (touch events için)
+    let startX = 0;
+    let endX = 0;
+
+    document.getElementById('photo-gallery-modal').addEventListener('touchstart', function (e) {
+        startX = e.touches[0].clientX;
+    });
+
+    document.getElementById('photo-gallery-modal').addEventListener('touchend', function (e) {
+        endX = e.changedTouches[0].clientX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const threshold = 50;
+        const diff = startX - endX;
+
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0) {
+                nextPhoto(); // Sola kaydırma - sonraki fotoğraf
+            } else {
+                previousPhoto(); // Sağa kaydırma - önceki fotoğraf
+            }
+        }
+    }
+
+    // Event listener'ları ekle
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.feather) {
+            window.feather.replace();
+        }
+
+        // Ana fotoğraf tıklama
+        const anaFoto = document.getElementById('ana-foto');
+        if (anaFoto) {
+            anaFoto.addEventListener('click', () => openPhotoGallery(0));
+        }
+
+        // Galeri açma butonu
+        const openGalleryBtn = document.getElementById('open-gallery-btn');
+        if (openGalleryBtn) {
+            openGalleryBtn.addEventListener('click', () => openPhotoGallery(0));
+        }
+
+        // Thumbnail tıklama
+        document.querySelectorAll('.foto-thumbnail').forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                const photoUrl = thumb.dataset.photoUrl;
+                const photoIndex = parseInt(thumb.dataset.photoIndex);
+                changeMainPhoto(photoUrl);
+                openPhotoGallery(photoIndex);
+            });
+        });
+
+        // Test butonları
+        const testDriveBtn = document.getElementById('test-drive-btn');
+        if (testDriveBtn) {
+            testDriveBtn.addEventListener('click', requestTestDrive);
+        }
+
+
+        // Galeri butonları
+        const closeGalleryBtn = document.getElementById('close-gallery-btn');
+        if (closeGalleryBtn) {
+            closeGalleryBtn.addEventListener('click', closePhotoGallery);
+        }
+
+        const prevPhotoBtn = document.getElementById('prev-photo-btn');
+        if (prevPhotoBtn) {
+            prevPhotoBtn.addEventListener('click', previousPhoto);
+        }
+
+        const nextPhotoBtn = document.getElementById('next-photo-btn');
+        if (nextPhotoBtn) {
+            nextPhotoBtn.addEventListener('click', nextPhoto);
+        }
+
+        // Galeri thumbnail'leri
+        document.querySelectorAll('.gallery-thumbnail').forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                const thumbIndex = parseInt(thumb.dataset.thumbIndex);
+                goToPhoto(thumbIndex);
+            });
+        });
+    });
+</script>
+{% endblock %}

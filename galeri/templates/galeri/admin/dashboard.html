@@ -1,0 +1,152 @@
+{% extends 'galeri/admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard - Yönetici Paneli{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+    <p class="text-gray-600">Hoş geldiniz, {{ user.username }}</p>
+</div>
+
+<!-- İstatistik Kartları -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i data-feather="truck" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900">{{ toplam_arac }}</h3>
+        <p class="text-gray-600 text-sm">Toplam Araç</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900">{{ satilmamis_arac }}</h3>
+        <p class="text-gray-600 text-sm">Satılmamış</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i data-feather="dollar-sign" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900">{{ satilmis_arac }}</h3>
+        <p class="text-gray-600 text-sm">Satılmış</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i data-feather="star" class="w-6 h-6 text-purple-600"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900">{{ yeni_arac }}</h3>
+        <p class="text-gray-600 text-sm">Yeni Araç</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <i data-feather="tag" class="w-6 h-6 text-red-600"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900">{{ firsat_arac }}</h3>
+        <p class="text-gray-600 text-sm">Fırsat</p>
+    </div>
+</div>
+
+<!-- Hızlı İşlemler -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Hızlı İşlemler</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{% url 'admin_arac_ekle' %}" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <i data-feather="plus-circle" class="w-5 h-5"></i>
+            <span>Yeni Araç Ekle</span>
+        </a>
+        <a href="{% url 'admin_arac_listesi' %}" class="bg-black hover:bg-gray-900 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <i data-feather="list" class="w-5 h-5"></i>
+            <span>Tüm Araçları Görüntüle</span>
+        </a>
+        <a href="{% url 'anasayfa' %}" target="_blank" class="bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <i data-feather="external-link" class="w-5 h-5"></i>
+            <span>Siteyi Görüntüle</span>
+        </a>
+    </div>
+</div>
+
+<!-- Son Eklenen Araçlar -->
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-900">Son Eklenen Araçlar</h2>
+        <a href="{% url 'admin_arac_listesi' %}" class="text-yellow-600 hover:text-yellow-700 font-semibold text-sm">
+            Tümünü Gör <i data-feather="arrow-right" class="w-4 h-4 inline"></i>
+        </a>
+    </div>
+    
+    {% if son_araclar %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Araç</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marka/Model</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yıl</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fiyat</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for arac in son_araclar %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        {% if arac.get_ana_foto_url %}
+                            <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka.ad }} {{ arac.model.ad }}" class="w-16 h-16 object-cover rounded-lg">
+                        {% else %}
+                            <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <i data-feather="image" class="w-6 h-6 text-gray-400"></i>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ arac.marka.ad }}</div>
+                        <div class="text-sm text-gray-500">{{ arac.model.ad }}</div>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ arac.yil }}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ arac.fiyat|intcomma }} TL</td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        {% if arac.satildi_mi %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-800">Satıldı</span>
+                        {% elif arac.durum == 'yeni' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Yeni</span>
+                        {% elif arac.durum == 'firsat' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fırsat</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'admin_arac_duzenle' arac.id %}" class="text-yellow-600 hover:text-yellow-900 mr-3">
+                            <i data-feather="edit" class="w-4 h-4 inline"></i>
+                        </a>
+                        <a href="{% url 'arac_detay' arac.id %}" target="_blank" class="text-blue-600 hover:text-blue-900">
+                            <i data-feather="eye" class="w-4 h-4 inline"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-gray-600 text-center py-8">Henüz araç eklenmemiş.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

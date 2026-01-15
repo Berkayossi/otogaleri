@@ -1,0 +1,325 @@
+{% extends 'galeri/base.html' %}
+{% load static %}
+{% load l10n %}
+{% load humanize %}
+{% block title %}Oto Galeri | Anasayfa{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<style>
+    .vehicle-swiper {
+        position: relative;
+        width: 100%;
+        padding: 40px 60px 80px 60px;
+        overflow: visible !important;
+    }
+
+    .vehicle-swiper .swiper-wrapper {
+        padding-bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    .vehicle-swiper .swiper-slide {
+        width: 380px !important;
+        height: auto;
+        transition: all 0.4s ease;
+        opacity: 0.7;
+        transform: scale(0.9);
+        flex-shrink: 0;
+    }
+
+    .vehicle-swiper .swiper-slide-active {
+        opacity: 1 !important;
+        transform: scale(1.05) !important;
+        z-index: 10;
+    }
+
+    .swiper-pagination-bullet-active {
+        background-color: #eab308 !important;
+    }
+
+
+    .swiper-button-next,
+    .swiper-button-prev {
+        position: absolute !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        color: #eab308 !important;
+        background: white !important;
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+        z-index: 10 !important;
+        opacity: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .swiper-button-next {
+        right: 10px !important;
+    }
+
+    .swiper-button-prev {
+        left: 10px !important;
+    }
+
+
+
+    .swiper-button-next:after,
+    .swiper-button-prev:after {
+        content: '' !important;
+    }
+
+    .swiper-button-next::before,
+    .swiper-button-prev::before {
+        content: '';
+        width: 0;
+        height: 0;
+        border-style: solid;
+    }
+
+    .swiper-button-next::before {
+        border-width: 8px 0 8px 12px;
+        border-color: transparent transparent transparent #eab308;
+        margin-left: 3px;
+    }
+
+    .swiper-button-prev::before {
+        border-width: 8px 12px 8px 0;
+        border-color: transparent #eab308 transparent transparent;
+        margin-right: 3px;
+    }
+
+    .swiper-button-disabled {
+        opacity: 0.35 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Vanta overlay -->
+<section class="relative h-screen flex items-center justify-center text-white overflow-hidden" id="hero"
+    style="background-image: url('{% static 'galeri/background.jpg' %}'); background-size: cover; background-position: center;">
+    <div class="absolute inset-0 bg-black bg-opacity-60"></div>
+    <div class="relative z-10 text-center px-6">
+        <h1 class="hero-text text-4xl md:text-6xl font-bold mb-6">Hayalinizdeki Aracı Keşfedin</h1>
+        <p class="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">Sadece en iyisi , ayrıcalıklı hizmet anlayışıyla.</p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="{% url 'araclar_listesi' %}"
+                class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full transition-smooth">Envanteri
+                İncele</a>
+            <a href="#iletisim"
+                class="bg-transparent border-2 border-white hover:bg-white hover:text-black font-bold py-3 px-8 rounded-full transition-smooth">Test
+                Sürüşü</a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Vehicles -->
+<section class="py-20 bg-white bg-opacity-90" id="araclar">
+    <div class="max-w-[1200px] mx-auto px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Öne Çıkan Araçlar</h2>
+            <div class="w-20 h-1 bg-yellow-500 mx-auto mt-4"></div>
+        </div>
+        <!-- Swiper Carousel -->
+        <div class="swiper vehicle-swiper">
+            <div class="swiper-wrapper">
+                {% for arac in araclar %}
+                <div class="swiper-slide">
+                    <div class="car-card bg-white rounded-xl overflow-hidden shadow-2xl cursor-pointer h-full"
+                        onclick="window.location.href='{% url 'arac_detay' arac.id %}'">
+                        <div class="relative h-64 overflow-hidden">
+                            {% if arac.get_ana_foto_url %}
+                            <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka.ad }} {{ arac.model.ad }}"
+                                class="w-full h-full object-cover">
+                            {% else %}
+                            <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-gray-500">Fotoğraf Yok</span>
+                            </div>
+                            {% endif %}
+                            {% if arac.durum == 'yeni' %}
+                            <div
+                                class="absolute top-4 right-4 bg-yellow-500 text-black font-bold px-3 py-1 rounded-full text-sm">
+                                YENİ</div>
+                            {% elif arac.durum == 'firsat' %}
+                            <div
+                                class="absolute top-4 right-4 bg-red-500 text-white font-bold px-3 py-1 rounded-full text-sm">
+                                FIRSAT</div>
+                            {% endif %}
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ arac.marka.ad }} {{ arac.model.ad }}
+                            </h3>
+                            <div class="flex items-center text-gray-600 mb-4">
+                                <i data-feather="map-pin" class="w-4 h-4 mr-1"></i>
+                                <span>Hemen teslim</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-2xl font-bold text-gray-900">{{ arac.ilan_fiyat|intcomma }} TL</span>
+                                <a href="{% url 'arac_detay' arac.id %}"
+                                    class="text-yellow-600 hover:text-yellow-700 font-semibold">Detay →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center w-full py-10">
+                    <p class="text-xl text-gray-500">Hiç araç bulunamadı.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Navigation & Pagination -->
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+
+        <!-- Modals -->
+        {% for arac in araclar %}
+        <div class="modal" id="arac-{{ forloop.counter }}" aria-hidden="true" role="dialog" aria-modal="true">
+            <div class="modal-backdrop" data-modal-close></div>
+            <div class="modal-content" role="document">
+                <button class="modal-close" aria-label="Kapat" data-modal-close>&times;</button>
+                {% if arac.get_ana_foto_url %}
+                <img src="{{ arac.get_ana_foto_url }}" alt="{{ arac.marka.ad }} {{ arac.model.ad }}"
+                    class="w-full h-auto rounded-md">
+                {% endif %}
+                <h3 class="text-2xl font-semibold mt-3">{{ arac.marka.ad }} {{ arac.model.ad }}</h3>
+                <p>Yıl: {{ arac.yil }} | Fiyat: {{ arac.ilan_fiyat|intcomma }} TL</p>
+                <p>{{ arac.aciklama }}</p>
+
+                <div class="mt-6">
+                    <a href="{% url 'arac_detay' arac.id %}"
+                        class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg text-center transition-colors">
+                        Detay Sayfasına Git →
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="text-center mt-12">
+            <a href="{% url 'araclar_listesi' %}"
+                class="border-2 border-black hover:bg-black hover:text-white font-bold py-3 px-8 rounded-full transition-smooth">Tüm
+                Envanteri Gör</a>
+        </div>
+    </div>
+</section>
+
+<!-- Services -->
+<section class="py-20 bg-gray-900 text-white" id="hakkimizda">
+    <div class="max-w-[1200px] mx-auto px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold">Premium Hizmetler</h2>
+            <div class="w-20 h-1 bg-yellow-500 mx-auto mt-4"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div
+                class="text-center p-8 bg-gray-800 rounded-xl hover:bg-gray-700 hover:-translate-y-2 transition-all duration-500 opacity-0 translate-y-8 animate-on-scroll">
+                <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-feather="repeat" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-4">Takas Değeri</h3>
+                <p class="text-gray-300">Aracınız için şeffaf, adil piyasa değeri tespiti.</p>
+            </div>
+            <div class="text-center p-8 bg-gray-800 rounded-xl hover:bg-gray-700 hover:-translate-y-2 transition-all duration-500 opacity-0 translate-y-8 animate-on-scroll"
+                style="transition-delay: 100ms;">
+                <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-feather="dollar-sign" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-4">Finansman</h3>
+                <p class="text-gray-300">Size özel, rekabetçi oranlarla finansman çözümleri.</p>
+            </div>
+            <div class="text-center p-8 bg-gray-800 rounded-xl hover:bg-gray-700 hover:-translate-y-2 transition-all duration-500 opacity-0 translate-y-8 animate-on-scroll"
+                style="transition-delay: 200ms;">
+                <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-feather="shield" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-4">Genişletilmiş Garanti</h3>
+                <p class="text-gray-300">Yatırımınızı koruyan kapsamlı güvence paketleri.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 bg-yellow-600 text-white">
+    <div class="max-w-[1200px] mx-auto px-6 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">Hazır mısınız?</h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">Kişiselleştirilmiş danışmanlık randevunuzu alın, hayalinizdeki araca
+            birlikte ulaşalım.</p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="#iletisim"
+                class="bg-black hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full transition-smooth">Randevu
+                Al</a>
+            <a href="tel:+902120000000"
+                class="bg-white hover:bg-gray-100 text-black font-bold py-3 px-8 rounded-full transition-smooth">Ara:
+                (0212) 000 00 00</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('search-form');
+        const input = document.getElementById('search-input');
+        const cards = Array.from(document.querySelectorAll('.arac-karti'));
+        const chips = Array.from(document.querySelectorAll('.filter-chip'));
+
+        function applyFilters() {
+            const q = (input.value || '').toLowerCase();
+            const active = chips.find(c => c.getAttribute('aria-pressed') === 'true');
+            const tag = active ? active.dataset.filter : 'all';
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const matchText = !q || text.includes(q);
+                const matchTag = tag === 'all' || (card.dataset.tags || '').includes(tag);
+                card.style.display = (matchText && matchTag) ? '' : 'none';
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                applyFilters();
+            });
+            input.addEventListener('input', applyFilters);
+        }
+
+        chips.forEach(chip => chip.addEventListener('click', function () {
+            chips.forEach(c => c.setAttribute('aria-pressed', 'false'));
+            chip.setAttribute('aria-pressed', 'true');
+            applyFilters();
+        }));
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var vehicleSwiper = new Swiper(".vehicle-swiper", {
+            effect: "slide",
+            grabCursor: true,
+            centeredSlides: true,
+            slidesPerView: "auto",
+            spaceBetween: 30,
+            rewind: true,
+            watchSlidesProgress: true,
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Yönetici Paneli - Oto Galeri{% endblock %}</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'galeri/styles.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    {% block extra_head %}{% endblock %}
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform duration-300 md:translate-x-0 fixed md:relative z-30 h-full"
+        id="sidebar">
+        <div class="p-6 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i data-feather="settings" class="text-yellow-400"></i>
+                <a href="{% url 'admin_dashboard' %}" class="text-lg font-bold">Yönetici Paneli</a>
+            </div>
+            <button class="md:hidden text-gray-400 hover:text-white" id="close-sidebar">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <a href="{% url 'admin_dashboard' %}"
+                class="flex items-center space-x-3 px-4 py-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors">
+                <i data-feather="home" class="w-5 h-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'admin_arac_listesi' %}"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i data-feather="list" class="w-5 h-5"></i>
+                <span>Araçlar</span>
+            </a>
+            <a href="{% url 'admin_arac_ekle' %}"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i data-feather="plus-circle" class="w-5 h-5"></i>
+                <span>Yeni Araç</span>
+            </a>
+            <a href="{% url 'raporlar:raporlar' %}"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i data-feather="bar-chart-2" class="w-5 h-5"></i>
+                <span>Raporlar</span>
+            </a>
+            <a href="{% url 'admin_personel_listesi' %}"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i data-feather="users" class="w-5 h-5"></i>
+                <span>Personel</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-800 space-y-2">
+            <a href="{% url 'anasayfa' %}" target="_blank"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                <i data-feather="external-link" class="w-5 h-5"></i>
+                <span>Siteyi Görüntüle</span>
+            </a>
+            <a href="{% url 'admin_logout' %}"
+                class="flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors">
+                <i data-feather="log-out" class="w-5 h-5"></i>
+                <span>Çıkış Yap</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden" id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Mobile Header -->
+        <header class="md:hidden bg-white shadow-sm p-4 flex items-center justify-between z-10">
+            <div class="flex items-center space-x-2">
+                <i data-feather="settings" class="text-yellow-600"></i>
+                <span class="font-bold text-gray-900">Yönetici Paneli</span>
+            </div>
+            <button class="text-gray-600 hover:text-gray-900" id="open-sidebar">
+                <i data-feather="menu" class="w-6 h-6"></i>
+            </button>
+        </header>
+
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+            <div class="container mx-auto px-6 py-8 p-4">
+                {% if messages %}
+                <div class="mb-6">
+                    {% for message in messages %}
+                    <div
+                        class="bg-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-500 text-white px-4 py-3 rounded-lg mb-2 flex items-center justify-between shadow-sm">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200">
+                            <i data-feather="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'galeri/script.js' %}"></script>
+    <script>
+        feather.replace();
+
+        // Mobile Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const openBtn = document.getElementById('open-sidebar');
+        const closeBtn = document.getElementById('close-sidebar');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        openBtn?.addEventListener('click', toggleSidebar);
+        closeBtn?.addEventListener('click', toggleSidebar);
+        overlay?.addEventListener('click', toggleSidebar);
+
+        // Responsive Sidebar Fix on Resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+
+        // Initialize state
+        if (window.innerWidth < 768) {
+            sidebar.classList.add('-translate-x-full');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,782 @@
+{% extends 'galeri/admin/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load l10n %}
+
+{% block title %}Kapsamlı Raporlar - Yönetici Paneli{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stat-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+    }
+
+    .tab-button {
+        transition: all 0.3s;
+    }
+
+    .tab-button.active {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #000;
+        font-weight: bold;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #059669);
+        transition: width 0.5s ease;
+    }
+
+    .main-tab-button {
+        border-bottom: 3px solid transparent;
+        color: #6b7280;
+        transition: all 0.3s;
+    }
+
+    .main-tab-button.active {
+        border-bottom-color: #f59e0b;
+        color: #000;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- UI Fonksiyonları - Harici JS dosyası -->
+<script src="{% static 'raporlar/js/raporlar-ui.js' %}"></script>
+
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2"> Kapsamlı Satış Raporları</h1>
+        <p class="text-gray-600">Detaylı analiz, karlılık ve performans metrikleri</p>
+    </div>
+    <div class="flex space-x-3">
+        <a href="{% url 'raporlar:rapor_pdf' %}?baslangic_yil={{ baslangic_yil }}&bitis_yil={{ bitis_yil }}&baslangic_ay={{ baslangic_ay }}&bitis_ay={{ bitis_ay }}"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2">
+            <i data-feather="file-text" class="w-5 h-5"></i>
+            <span>PDF İndir</span>
+        </a>
+        <a href="{% url 'raporlar:rapor_excel' %}?baslangic_yil={{ baslangic_yil }}&bitis_yil={{ bitis_yil }}&baslangic_ay={{ baslangic_ay }}&bitis_ay={{ bitis_ay }}"
+            class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2">
+            <i data-feather="file" class="w-5 h-5"></i>
+            <span>Excel İndir</span>
+        </a>
+    </div>
+</div>
+</div>
+
+
+
+<!-- SERBEST RAPOR İÇERİĞİ -->
+
+
+<!-- Tarih Filtreleme -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">📅 Tarih Aralığı Seçin</h2>
+
+    <!-- Hızlı Seçim Butonları -->
+    <div class="mb-6 flex flex-wrap gap-2">
+        <button type="button" onclick="setQuickFilter('bu_ay')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Bu Ay
+        </button>
+        <button type="button" onclick="setQuickFilter('gecen_ay')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Geçen Ay
+        </button>
+        <button type="button" onclick="setQuickFilter('bu_yil')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Bu Yıl
+        </button>
+        <button type="button" onclick="setQuickFilter('gecen_yil')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Geçen Yıl
+        </button>
+        <button type="button" onclick="setQuickFilter('son_3_ay')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Son 3 Ay
+        </button>
+        <button type="button" onclick="setQuickFilter('son_6_ay')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Son 6 Ay
+        </button>
+        <button type="button" onclick="setQuickFilter('tumu')"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Tümü
+        </button>
+    </div>
+
+    <form method="GET" action="{% url 'raporlar:raporlar' %}" id="tarihFiltreForm" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Başlangıç Tarihi -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Başlangıç Tarihi</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="baslangic_yil" class="block text-sm font-medium text-gray-700 mb-2">Yıl</label>
+                        <select id="baslangic_yil" name="baslangic_yil"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none">
+                            {% for yil in yil_listesi %}
+                            <option value="{{ yil }}" {% if yil == baslangic_yil %}selected{% endif %}>{{ yil }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="baslangic_ay" class="block text-sm font-medium text-gray-700 mb-2">Ay</label>
+                        <select id="baslangic_ay" name="baslangic_ay"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none">
+                            <option value="0" {% if baslangic_ay == 0 %}selected{% endif %}>Tümü</option>
+                            <option value="1" {% if baslangic_ay == 1 %}selected{% endif %}>Ocak</option>
+                            <option value="2" {% if baslangic_ay == 2 %}selected{% endif %}>Şubat</option>
+                            <option value="3" {% if baslangic_ay == 3 %}selected{% endif %}>Mart</option>
+                            <option value="4" {% if baslangic_ay == 4 %}selected{% endif %}>Nisan</option>
+                            <option value="5" {% if baslangic_ay == 5 %}selected{% endif %}>Mayıs</option>
+                            <option value="6" {% if baslangic_ay == 6 %}selected{% endif %}>Haziran</option>
+                            <option value="7" {% if baslangic_ay == 7 %}selected{% endif %}>Temmuz</option>
+                            <option value="8" {% if baslangic_ay == 8 %}selected{% endif %}>Ağustos</option>
+                            <option value="9" {% if baslangic_ay == 9 %}selected{% endif %}>Eylül</option>
+                            <option value="10" {% if baslangic_ay == 10 %}selected{% endif %}>Ekim</option>
+                            <option value="11" {% if baslangic_ay == 11 %}selected{% endif %}>Kasım</option>
+                            <option value="12" {% if baslangic_ay == 12 %}selected{% endif %}>Aralık</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bitiş Tarihi -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Bitiş Tarihi</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="bitis_yil" class="block text-sm font-medium text-gray-700 mb-2">Yıl</label>
+                        <select id="bitis_yil" name="bitis_yil"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none">
+                            {% for yil in yil_listesi %}
+                            <option value="{{ yil }}" {% if yil == bitis_yil %}selected{% endif %}>{{ yil }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bitis_ay" class="block text-sm font-medium text-gray-700 mb-2">Ay</label>
+                        <select id="bitis_ay" name="bitis_ay"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none">
+                            <option value="0" {% if bitis_ay == 0 %}selected{% endif %}>Tümü</option>
+                            <option value="1" {% if bitis_ay == 1 %}selected{% endif %}>Ocak</option>
+                            <option value="2" {% if bitis_ay == 2 %}selected{% endif %}>Şubat</option>
+                            <option value="3" {% if bitis_ay == 3 %}selected{% endif %}>Mart</option>
+                            <option value="4" {% if bitis_ay == 4 %}selected{% endif %}>Nisan</option>
+                            <option value="5" {% if bitis_ay == 5 %}selected{% endif %}>Mayıs</option>
+                            <option value="6" {% if bitis_ay == 6 %}selected{% endif %}>Haziran</option>
+                            <option value="7" {% if bitis_ay == 7 %}selected{% endif %}>Temmuz</option>
+                            <option value="8" {% if bitis_ay == 8 %}selected{% endif %}>Ağustos</option>
+                            <option value="9" {% if bitis_ay == 9 %}selected{% endif %}>Eylül</option>
+                            <option value="10" {% if bitis_ay == 10 %}selected{% endif %}>Ekim</option>
+                            <option value="11" {% if bitis_ay == 11 %}selected{% endif %}>Kasım</option>
+                            <option value="12" {% if bitis_ay == 12 %}selected{% endif %}>Aralık</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="resetFilter()"
+                class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors">
+                Sıfırla
+            </button>
+            <button type="submit"
+                class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg transition-colors flex items-center space-x-2">
+                <i data-feather="filter" class="w-5 h-5"></i>
+                <span>Filtrele</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Özet İstatistikler -->
+
+
+<!-- Tab Navigasyonu -->
+<div class="bg-white rounded-xl shadow-lg p-2 mb-8">
+    <div class="flex space-x-2 overflow-x-auto">
+        <button onclick="showTab('genel')" class="tab-button active px-6 py-3 rounded-lg whitespace-nowrap"
+            data-tab="genel">
+            📊 Genel Bakış
+        </button>
+        <button onclick="showTab('karlilik')" class="tab-button px-6 py-3 rounded-lg whitespace-nowrap"
+            data-tab="karlilik">
+            💰 Karlılık Analizi
+        </button>
+        <button onclick="showTab('performans')" class="tab-button px-6 py-3 rounded-lg whitespace-nowrap"
+            data-tab="performans">
+            ⚡ Performans
+        </button>
+        <button onclick="showTab('envanter')" class="tab-button px-6 py-3 rounded-lg whitespace-nowrap"
+            data-tab="envanter">
+            📦 Envanter
+        </button>
+        <button onclick="showTab('marka')" class="tab-button px-6 py-3 rounded-lg whitespace-nowrap" data-tab="marka">
+            🏷️ Marka Analizi
+        </button>
+    </div>
+</div>
+
+<!-- GENEL BAKIŞ TAB -->
+<div id="tab-genel" class="tab-content">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i data-feather="truck" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ toplam_satilan }}</h3>
+            <p class="text-yellow-100 text-sm">Toplam Satılan Araç</p>
+        </div>
+
+        <div class="stat-card bg-gradient-to-br from-green-400 to-green-500 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i data-feather="dollar-sign" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ toplam_gelir|intcomma }} ₺</h3>
+            <p class="text-green-100 text-sm">Toplam Gelir</p>
+        </div>
+
+        <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i data-feather="trending-up" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ toplam_kar|intcomma }} ₺</h3>
+            <p class="text-blue-100 text-sm">Toplam Kar</p>
+        </div>
+
+        <div class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i data-feather="package" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ mevcut_stok }}</h3>
+            <p class="text-purple-100 text-sm">Mevcut Stok</p>
+        </div>
+    </div>
+
+    <!-- Ortalama Metrikler -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+            <div class="flex items-center space-x-3 mb-2">
+                <i data-feather="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
+                <h3 class="text-lg font-semibold text-gray-900">Ortalama Satış Fiyatı</h3>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ ortalama_satis_fiyati|floatformat:0|intcomma }} ₺</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
+            <div class="flex items-center space-x-3 mb-2">
+                <i data-feather="pie-chart" class="w-5 h-5 text-emerald-500"></i>
+                <h3 class="text-lg font-semibold text-gray-900">Ortalama Kar</h3>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ ortalama_kar|floatformat:0|intcomma }} ₺</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+            <div class="flex items-center space-x-3 mb-2">
+                <i data-feather="clock" class="w-5 h-5 text-orange-500"></i>
+                <h3 class="text-lg font-semibold text-gray-900">Ortalama Satış Süresi</h3>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">
+                {% if ortalama_satis_suresi %}
+                {{ ortalama_satis_suresi|floatformat:0 }} gün
+                {% else %}
+                -
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    <!-- Aylık Satışlar ve Kar Grafiği (Kombine) -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">📈 Aylık Satışlar ve Kar Analizi</h2>
+        {% if aylik_satislar %}
+        <div class="chart-container">
+            <canvas id="aylikSatisKarChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <p class="text-lg">Henüz satış verisi bulunmamaktadır.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Personel Performans Grafiği -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">👥 Personel Performansı</h2>
+        {% if personel_performans %}
+        <div class="chart-container">
+            <canvas id="personelPerformansChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <p class="text-lg">Henüz personel performans verisi bulunmamaktadır.</p>
+        </div>
+        {% endif %}\
+    </div>
+
+    <!-- Marka Bazında Kar Marjı Yüzdesi -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">📊 Marka Bazında Kar Marjı Yüzdesi</h2>
+        {% if marka_kar_marji %}
+        <div class="chart-container">
+            <canvas id="markaKarMarjiChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <p class="text-lg">Henüz kar marjı verisi bulunmamaktadır.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- KARLILIK ANALİZİ TAB -->
+<div id="tab-karlilik" class="tab-content hidden">
+    <!-- Marka Bazında Karlılık -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">🏆 Marka Bazında Karlılık</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Marka</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Satış Sayısı</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Toplam Kar</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Ortalama Kar</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Karlılık</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in marka_karlilik %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.marka }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.satis_sayisi }} adet
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                            {{ item.toplam_kar|default:0|intcomma }} ₺
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ item.ortalama_kar|default:0|floatformat:0|intcomma }} ₺
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ item.kar_yuzdesi|default:0 }}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-600">
+                            Karlılık verisi bulunmamaktadır.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- En Karlı Araçlar -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">🌟 En Karlı Araçlar (Top 10)</h2>
+            <div class="space-y-3">
+                {% for arac in en_karli_araclar %}
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div>
+                        <p class="font-semibold text-gray-900"> {{ arac.model }}</p>
+                        <p class="text-sm text-gray-600">{{ arac.yil }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-green-600">+{{ arac.kar_zarar|intcomma }} ₺</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-600 py-8">Veri bulunmamaktadır.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">⚠️ En Az Karlı Araçlar (Bottom 10)</h2>
+            <div class="space-y-3">
+                {% for arac in en_az_karli_araclar %}
+                <div class="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div>
+                        <p class="font-semibold text-gray-900"> {{ arac.model }}</p>
+                        <p class="text-sm text-gray-600">{{ arac.yil }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-red-600">{{ arac.kar_zarar|intcomma }} ₺</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-600 py-8">Veri bulunmamaktadır.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Fiyat İndirimi Analizi -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">🏷️ Fiyat İndirimi Analizi</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-sm text-gray-600 mb-2">İndirimli Satış Sayısı</p>
+                <p class="text-3xl font-bold text-blue-600">{{ fiyat_indirimi_sayisi }}</p>
+            </div>
+            <div class="p-6 bg-purple-50 rounded-lg border border-purple-200">
+                <p class="text-sm text-gray-600 mb-2">Toplam İndirim Tutarı</p>
+                <p class="text-3xl font-bold text-purple-600">{{ toplam_fiyat_indirimi|intcomma }} ₺</p>
+            </div>
+            <div class="p-6 bg-pink-50 rounded-lg border border-pink-200">
+                <p class="text-sm text-gray-600 mb-2">Ortalama İndirim</p>
+                <p class="text-3xl font-bold text-pink-600">{{ ortalama_fiyat_indirimi|floatformat:0|intcomma }} ₺
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PERFORMANS TAB -->
+<div id="tab-performans" class="tab-content hidden">
+    <!-- En Hızlı Satılan Araçlar -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">🚀 En Hızlı Satılan Araçlar</h2>
+            <div class="space-y-3">
+                {% for item in en_hizli_satilan %}
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div>
+                        <p class="font-semibold text-gray-900"> {{ item.arac.model }}</p>
+                        <p class="text-sm text-gray-600">{{ item.arac.yil }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-green-600">{{ item.sure }} gün</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-600 py-8">Veri bulunmamaktadır.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">🐌 En Yavaş Satılan Araçlar</h2>
+            <div class="space-y-3">
+                {% for item in en_yavas_satilan %}
+                <div class="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div>
+                        <p class="font-semibold text-gray-900"> {{ item.arac.model }}</p>
+                        <p class="text-sm text-gray-600">{{ item.arac.yil }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-orange-600">{{ item.sure }} gün</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-600 py-8">Veri bulunmamaktadır.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Durum Bazında Performans -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">📊 Durum Bazında Satış Performansı</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Durum</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Satış Sayısı</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Toplam Gelir</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Toplam Kar</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in durum_performans %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {% if item.durum == 'yeni' %}
+                            <span
+                                class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Yeni</span>
+                            {% else %}
+                            <span
+                                class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Fırsat</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.satis_sayisi }} adet
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                            {{ item.toplam_gelir|intcomma }} ₺
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
+                            {{ item.toplam_kar|default:0|intcomma }} ₺
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-gray-600">
+                            Veri bulunmamaktadır.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ENVANTER TAB -->
+<div id="tab-envanter" class="tab-content hidden">
+    <!-- Stokta Kalanlar -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">📦 Stokta Kalan Araçlar (İlk 20)</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Araç</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Yıl</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">İlan Fiyatı</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Stokta Kalma Süresi</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Durum</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in stokta_kalanlar %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                             {{ item.arac.model }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.arac.yil }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.arac.ilan_fiyat|intcomma }} ₺</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600">{{ item.sure }}
+                            gün</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if item.arac.durum == 'yeni' %}
+                            <span
+                                class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Yeni</span>
+                            {% else %}
+                            <span
+                                class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Fırsat</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-600">
+                            Stokta araç bulunmamaktadır.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Yıl Bazında Dağılım -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">🚗 Satılan Araçların Yıl Bazında Dağılımı</h2>
+        {% if yil_dagilimi %}
+        <div class="chart-container">
+            <canvas id="yilDagilimiChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <p class="text-lg">Henüz yıl bazında veri bulunmamaktadır.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MARKA ANALİZİ TAB -->
+<div id="tab-marka" class="tab-content hidden">
+    <!-- Markalara Göre Satışlar Grafiği -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">🏷️ Markalara Göre Satışlar</h2>
+        {% if marka_toplam_satis %}
+        <div class="chart-container">
+            <canvas id="markaSatislarChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <p class="text-lg">Henüz marka bazında veri bulunmamaktadır.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Markalara Göre Detaylı Tablo -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">📋 Markalara Göre Detaylı Satışlar</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Marka</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Satılan Araç Sayısı</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold uppercase">Toplam Gelir</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in marka_toplam_satis %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.marka }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.toplam }} adet</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            {% for gelir in marka_toplam_gelir %}
+                            {% if gelir.marka == item.marka %}
+                            {{ gelir.toplam_gelir|intcomma }} ₺
+                            {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-8 text-center text-gray-600">
+                            Henüz satış kaydı bulunmamaktadır.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<!-- Grafik Verileri - Django'dan JavaScript'e JSON Transfer -->
+<script id="chart-data" type="application/json">
+{
+    "aylikSatislar": {% if aylik_satislar %}{
+        "labels": [{% for ay, sayi in aylik_satislar.items %}"{{ ay }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "data": [{% for ay, sayi in aylik_satislar.items %}{{ sayi|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+    }{% else %}null{% endif %},
+    "aylikGelir": {% if aylik_gelir %}{
+        "labels": [{% for ay, gelir in aylik_gelir.items %}"{{ ay }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "data": [{% for ay, gelir in aylik_gelir.items %}{{ gelir|default:0|unlocalize }}{% if not forloop.last %}, {% endif %}{% endfor %}] }{% else %}null{% endif %},
+    "aylikKar": {% if aylik_kar %}{
+        "labels": [{% for ay, kar in aylik_kar.items %}"{{ ay }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "data": [{% for ay, kar in aylik_kar.items %}{{ kar|default:0|unlocalize }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+    }{% else %}null{% endif %},
+    "markaKarMarji": {% if marka_kar_marji %}{
+        "labels": [{% for item in marka_kar_marji %}"{{ item.marka }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "data": [{% for item in marka_kar_marji %}{{ item.kar_marji_yuzdesi|default:0|unlocalize }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+    }{% else %}null{% endif %},
+    "markaSatislar": {% if marka_toplam_satis %}{
+        "labels": [{% for item in marka_toplam_satis %}"{{ item.marka }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "data": [{% for item in marka_toplam_satis %}{{ item.toplam|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+    }{% else %}null{% endif %},
+    "yilDagilimi": {% if yil_dagilimi %}{
+        "labels": [{% for item in yil_dagilimi %}"{{ item.yil }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "data": [{% for item in yil_dagilimi %}{{ item.satis_sayisi|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+    }{% else %}null{% endif %},
+    "personelPerformans": {% if personel_performans %}{
+        "labels": [{% for item in personel_performans %}"{{ item.personel }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "satisAdedi": [{% for item in personel_performans %}{{ item.satis_adedi|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        "toplamKar": [{% for item in personel_performans %}{{ item.toplam_kar|default:0|unlocalize }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+    }{% else %}null{% endif %}
+}
+</script>
+
+<!-- Chart.js Kütüphanesi -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<!-- Grafik Fonksiyonları - Harici JS dosyası -->
+<script src="{% static 'raporlar/js/raporlar-charts.js' %}"></script>
+
+<!-- Grafikleri Başlat -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('🚀 Chart initialization starting...');
+
+        // Chart.js yüklü mü kontrol et
+        if (typeof Chart === 'undefined') {
+            console.error('❌ Chart.js kütüphanesi yüklenmedi!');
+            return;
+        }
+        console.log('✅ Chart.js yüklendi:', Chart.version);
+
+        // Feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+            console.log('✅ Feather icons yüklendi');
+        }
+
+        // JSON verisini parse et
+        var chartDataElement = document.getElementById('chart-data');
+        if (!chartDataElement) {
+            console.error('❌ chart-data elementi bulunamadı!');
+            return;
+        }
+
+        try {
+            var chartData = JSON.parse(chartDataElement.textContent);
+            console.log('✅ Chart data parse edildi:', chartData);
+
+            // Canvas elementlerini kontrol et
+            var canvases = {
+                'aylikSatisKarChart': document.getElementById('aylikSatisKarChart'),
+                'personelPerformansChart': document.getElementById('personelPerformansChart'),
+                'markaKarMarjiChart': document.getElementById('markaKarMarjiChart'),
+                'markaSatislarChart': document.getElementById('markaSatislarChart'),
+                'yilDagilimiChart': document.getElementById('yilDagilimiChart')
+            };
+
+            console.log('📊 Canvas elementleri:', canvases);
+
+            // Tüm grafikleri başlat
+            if (typeof initAllCharts === 'function') {
+                console.log('🎨 initAllCharts fonksiyonu çağrılıyor...');
+                initAllCharts(chartData);
+                console.log('✅ Grafikler başlatıldı');
+            } else {
+                console.error('❌ initAllCharts fonksiyonu bulunamadı!');
+            }
+        } catch (error) {
+            console.error('❌ Chart initialization hatası:', error);
+            console.error('Stack trace:', error.stack);
+        }
+    });
+</script>
+{% endblock %}
