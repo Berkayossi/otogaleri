@@ -15,3 +15,6 @@ gunicorn>=21.2.0,<22.0.0
 
 # Python-dotenv (Environment variables)
 python-dotenv>=1.0.0,<2.0.0
+
+# Content Security Policy
+django-csp>=4.0,<5.0

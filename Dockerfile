@@ -21,6 +21,9 @@ RUN pip install --upgrade pip \
 # Proje dosyaları
 COPY . .
 
+# Static dosyaları topla
+RUN python manage.py collectstatic --noinput
+
 # Gunicorn portu
 EXPOSE 8000
 

@@ -16,7 +16,6 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -39,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'csp',
     'galeri',
     'raporlar',
 ]
@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
 
 ROOT_URLCONF = 'oto_galeri.urls'
@@ -121,6 +122,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'galeri/static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -133,3 +135,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Yüklenen dosyaların kaydedilec
 # Login URL
 LOGIN_URL = '/yonetim/giris/'
 LOGIN_REDIRECT_URL = '/yonetim/'
+
+# Security Settings for Production
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Content Security Policy (CSP) Settings - django-csp 4.0 format
+# Allow CDN resources while maintaining security
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'style-src': ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdn.tailwindcss.com"),
+        'script-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://cdn.tailwindcss.com"),
+        'connect-src': ("'self'", "https://cdn.jsdelivr.net", "https://unpkg.com"),
+        'img-src': ("'self'", "data:", "https:"),
+        'font-src': ("'self'", "https://fonts.gstatic.com"),
+        'frame-src': ("'none'",),
+    }
+}
