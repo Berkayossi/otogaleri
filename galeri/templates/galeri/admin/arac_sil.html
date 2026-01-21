@@ -30,7 +30,7 @@
             {% endif %}
             <div>
                 <h3 class="text-xl font-bold text-gray-900">{{ arac.marka.ad }} {{ arac.model.ad }}</h3>
-                <p class="text-gray-600">Yıl: {{ arac.yil }} | Fiyat: {{ arac.fiyat|intcomma }} TL</p>
+                <p class="text-gray-600">Yıl: {{ arac.yil }} | Fiyat: {{ arac.ilan_fiyat|intcomma }} TL</p>
                 <p class="text-gray-600">Durum: 
                     {% if arac.durum == 'yeni' %}
                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Yeni</span>
