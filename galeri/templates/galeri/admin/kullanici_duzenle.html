@@ -1,0 +1,107 @@
+{% extends 'galeri/admin/base.html' %}
+{% load static %}
+
+{% block title %}{{ kullanici.username }} Düzenle - Yönetici Paneli{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Kullanıcı Düzenle</h1>
+    <p class="text-gray-600">{{ kullanici.username }} kullanıcısını düzenleyin</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-8">
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                    Kullanıcı Adı <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="username" name="username" value="{{ kullanici.username }}" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    E-posta
+                </label>
+                <input type="email" id="email" name="email" value="{{ kullanici.email }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)
+                </label>
+                <input type="password" id="password" name="password"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all"
+                    placeholder="Yeni şifre girin">
+            </div>
+
+            <div>
+                <label for="grup" class="block text-sm font-medium text-gray-700 mb-2">
+                    Grup
+                </label>
+                <select id="grup" name="grup"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
+                    <option value="">Grup Seçin</option>
+                    {% for grup in gruplar %}
+                    <option value="{{ grup.id }}" {% if grup in kullanici.groups.all %}selected{% endif %}>
+                        {{ grup.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Ad
+                </label>
+                <input type="text" id="first_name" name="first_name" value="{{ kullanici.first_name }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
+            </div>
+
+            <div>
+                <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Soyad
+                </label>
+                <input type="text" id="last_name" name="last_name" value="{{ kullanici.last_name }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
+            </div>
+        </div>
+
+        <div class="space-y-4 pt-4 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Yetkiler</h3>
+            
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="is_staff" name="is_staff" {% if kullanici.is_staff %}checked{% endif %}
+                    class="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500">
+                <label for="is_staff" class="text-sm font-medium text-gray-700">
+                    Staff (Admin paneline erişim)
+                </label>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="is_superuser" name="is_superuser" {% if kullanici.is_superuser %}checked{% endif %}
+                    class="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500">
+                <label for="is_superuser" class="text-sm font-medium text-gray-700">
+                    Superuser (Tüm yetkilere sahip)
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <a href="{% url 'admin_kullanici_listesi' %}"
+                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold">
+                İptal
+            </a>
+            <button type="submit"
+                class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors font-bold flex items-center space-x-2">
+                <i data-feather="save" class="w-5 h-5"></i>
+                <span>Kaydet</span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

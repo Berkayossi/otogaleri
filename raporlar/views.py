@@ -7,6 +7,7 @@ from django.utils import timezone
 from calendar import month_name
 from datetime import timedelta, datetime
 from galeri.models import Arac, personel
+from galeri.decorators import rapor_required
 
 
 def _get_aylik_satislar(satilan_araclar, baslangic_yil, bitis_yil, baslangic_ay=0, bitis_ay=0):
@@ -137,7 +138,7 @@ def _get_personel_performans(satilan_araclar):
     return sorted(personel_performans, key=lambda x: x['satis_adedi'], reverse=True)
 
 
-@login_required
+@rapor_required
 def raporlar(request):
     """Satış raporları ana sayfası - Kapsamlı analiz"""
     # Tarih aralığı parametreleri
@@ -468,7 +469,7 @@ def raporlar(request):
     return render(request, 'raporlar/raporlar.html', context)
 
 
-@login_required
+@rapor_required
 def rapor_pdf(request):
     """PDF formatında kapsamlı rapor oluştur"""
     try:
@@ -684,7 +685,7 @@ def rapor_pdf(request):
         return redirect('raporlar:raporlar')
 
 
-@login_required
+@rapor_required
 def rapor_excel(request):
     """Excel formatında kapsamlı rapor oluştur"""
     try:

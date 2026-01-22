@@ -3,9 +3,11 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Arac, ilanDosyalari, Marka, Model, personel
+from .decorators import admin_required, superuser_required, arac_yoneticisi_required
 
 def anasayfa(request):
     araclar = Arac.objects.filter(satildi_mi=False)  # Satılmamış araçlar
@@ -131,25 +133,38 @@ def admin_logout(request):
 
 @login_required
 def admin_dashboard(request):
-    toplam_arac = Arac.objects.count()
-    satilmis_arac = Arac.objects.filter(satildi_mi=True).count()
-    satilmamis_arac = Arac.objects.filter(satildi_mi=False).count()
-    yeni_arac = Arac.objects.filter(durum='yeni').count()
-    firsat_arac = Arac.objects.filter(durum='firsat').count()
+    # Yetki kontrolü - Dashboard'u tüm giriş yapmış kullanıcılar görebilir
+    # ama içerik yetkilerine göre gösterilir
+    has_admin_access = (request.user.is_superuser or 
+                       request.user.groups.filter(name__in=['Admin', 'Araç Yöneticisi', 'Rapor Görüntüleyici']).exists())
     
-    son_araclar = Arac.objects.order_by('-ilan_tarihi')[:5]
+    if has_admin_access:
+        toplam_arac = Arac.objects.count()
+        satilmis_arac = Arac.objects.filter(satildi_mi=True).count()
+        satilmamis_arac = Arac.objects.filter(satildi_mi=False).count()
+        yeni_arac = Arac.objects.filter(durum='yeni').count()
+        firsat_arac = Arac.objects.filter(durum='firsat').count()
+        
+        son_araclar = Arac.objects.order_by('-ilan_tarihi')[:5]
+        
+        context = {
+            'toplam_arac': toplam_arac,
+            'satilmis_arac': satilmis_arac,
+            'satilmamis_arac': satilmamis_arac,
+            'yeni_arac': yeni_arac,
+            'firsat_arac': firsat_arac,
+            'son_araclar': son_araclar,
+            'has_admin_access': has_admin_access,
+        }
+    else:
+        # Yetkisiz kullanıcılar için boş context
+        context = {
+            'has_admin_access': False,
+        }
     
-    context = {
-        'toplam_arac': toplam_arac,
-        'satilmis_arac': satilmis_arac,
-        'satilmamis_arac': satilmamis_arac,
-        'yeni_arac': yeni_arac,
-        'firsat_arac': firsat_arac,
-        'son_araclar': son_araclar,
-    }
     return render(request, 'galeri/admin/dashboard.html', context)
 
-@login_required
+@admin_required
 def admin_arac_listesi(request):
     araclar = Arac.objects.all().order_by('-ilan_tarihi')
     paginator = Paginator(araclar, 15)
@@ -158,7 +173,7 @@ def admin_arac_listesi(request):
     
     return render(request, 'galeri/admin/arac_listesi.html', {'page_obj': page_obj})
 
-@login_required
+@arac_yoneticisi_required
 def admin_arac_ekle(request):
     if request.method == 'POST':
         marka_id = request.POST.get('marka_id')
@@ -262,7 +277,7 @@ def admin_arac_ekle(request):
     }
     return render(request, 'galeri/admin/arac_ekle.html', context)
 
-@login_required
+@arac_yoneticisi_required
 def admin_arac_duzenle(request, arac_id):
     arac = get_object_or_404(Arac, id=arac_id)
     fotograflar = arac.fotograflar.all()
@@ -390,7 +405,7 @@ def admin_arac_duzenle(request, arac_id):
     }
     return render(request, 'galeri/admin/arac_duzenle.html', context)
 
-@login_required
+@arac_yoneticisi_required
 def admin_arac_sil(request, arac_id):
     arac = get_object_or_404(Arac, id=arac_id)
     if request.method == 'POST':
@@ -400,7 +415,7 @@ def admin_arac_sil(request, arac_id):
         return redirect('admin_arac_listesi')
     return render(request, 'galeri/admin/arac_sil.html', {'arac': arac})
 
-@login_required
+@arac_yoneticisi_required
 def admin_foto_sil(request, foto_id):
     foto = get_object_or_404(ilanDosyalari, id=foto_id)
     if request.method == 'POST':
@@ -409,7 +424,7 @@ def admin_foto_sil(request, foto_id):
         return redirect('admin_arac_duzenle', arac_id=foto.aracid.id)
     return JsonResponse({'success': False})
 
-@login_required
+@admin_required
 def admin_personel_listesi(request):
     personeller = personel.objects.all().order_by('ad')
     paginator = Paginator(personeller, 15)
@@ -418,7 +433,7 @@ def admin_personel_listesi(request):
     
     return render(request, 'galeri/admin/personel_listesi.html', {'page_obj': page_obj})
 
-@login_required
+@admin_required
 def admin_personel_ekle(request):
     if request.method == 'POST':
         ad = request.POST.get('ad')
@@ -445,7 +460,7 @@ def admin_personel_ekle(request):
     
     return render(request, 'galeri/admin/personel_ekle.html')
 
-@login_required
+@admin_required
 def admin_personel_duzenle(request, personel_id):
     p = get_object_or_404(personel, id=personel_id)
     
@@ -468,7 +483,7 @@ def admin_personel_duzenle(request, personel_id):
     
     return render(request, 'galeri/admin/personel_duzenle.html', {'personel': p})
 
-@login_required
+@admin_required
 def admin_personel_sil(request, personel_id):
     p = get_object_or_404(personel, id=personel_id)
     if request.method == 'POST':
@@ -508,3 +523,127 @@ def get_modeller_by_marka(request, marka_id):
             'success': False,
             'error': str(e)
         }, status=400)
+
+# Kullanıcı Yönetimi View'ları
+@superuser_required
+def admin_kullanici_listesi(request):
+    """Kullanıcı listesi - sadece superuser erişebilir"""
+    kullanicilar = User.objects.all().order_by('-date_joined')
+    paginator = Paginator(kullanicilar, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'galeri/admin/kullanici_listesi.html', {'page_obj': page_obj})
+
+@superuser_required
+def admin_kullanici_ekle(request):
+    """Yeni kullanıcı ekle - sadece superuser erişebilir"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_superuser = request.POST.get('is_superuser') == 'on'
+        grup_id = request.POST.get('grup')
+        
+        try:
+            if not username or not password:
+                messages.error(request, 'Kullanıcı adı ve şifre zorunludur.')
+                context = {
+                    'gruplar': Group.objects.all().order_by('name'),
+                }
+                return render(request, 'galeri/admin/kullanici_ekle.html', context)
+            
+            if User.objects.filter(username=username).exists():
+                messages.error(request, 'Bu kullanıcı adı zaten kullanılıyor.')
+                context = {
+                    'gruplar': Group.objects.all().order_by('name'),
+                }
+                return render(request, 'galeri/admin/kullanici_ekle.html', context)
+            
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                is_staff=is_staff,
+                is_superuser=is_superuser
+            )
+            
+            # Grup ataması
+            if grup_id:
+                grup = get_object_or_404(Group, id=grup_id)
+                user.groups.add(grup)
+            
+            messages.success(request, f'{user.username} başarıyla eklendi.')
+            return redirect('admin_kullanici_listesi')
+        except Exception as e:
+            messages.error(request, f'Hata: {str(e)}')
+    
+    context = {
+        'gruplar': Group.objects.all().order_by('name'),
+    }
+    return render(request, 'galeri/admin/kullanici_ekle.html', context)
+
+@superuser_required
+def admin_kullanici_duzenle(request, user_id):
+    """Kullanıcı düzenle - sadece superuser erişebilir"""
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        try:
+            user.username = request.POST.get('username')
+            user.email = request.POST.get('email')
+            user.first_name = request.POST.get('first_name', '')
+            user.last_name = request.POST.get('last_name', '')
+            user.is_staff = request.POST.get('is_staff') == 'on'
+            user.is_superuser = request.POST.get('is_superuser') == 'on'
+            
+            # Şifre güncelleme (opsiyonel)
+            new_password = request.POST.get('password', '').strip()
+            if new_password:
+                user.set_password(new_password)
+            
+            user.save()
+            
+            # Grup atamalarını güncelle
+            user.groups.clear()
+            grup_id = request.POST.get('grup')
+            if grup_id:
+                grup = get_object_or_404(Group, id=grup_id)
+                user.groups.add(grup)
+            
+            messages.success(request, f'{user.username} başarıyla güncellendi.')
+            return redirect('admin_kullanici_listesi')
+        except Exception as e:
+            messages.error(request, f'Hata: {str(e)}')
+    
+    context = {
+        'kullanici': user,
+        'gruplar': Group.objects.all().order_by('name'),
+    }
+    return render(request, 'galeri/admin/kullanici_duzenle.html', context)
+
+@superuser_required
+def admin_kullanici_sil(request, user_id):
+    """Kullanıcı sil - sadece superuser erişebilir"""
+    user = get_object_or_404(User, id=user_id)
+    
+    # Kendi kendini silmesini engelle
+    if user.id == request.user.id:
+        messages.error(request, 'Kendi hesabınızı silemezsiniz.')
+        return redirect('admin_kullanici_listesi')
+    
+    if request.method == 'POST':
+        try:
+            username = user.username
+            user.delete()
+            messages.success(request, f'{username} başarıyla silindi.')
+        except Exception as e:
+            messages.error(request, f'Silinemedi. Hata: {str(e)}')
+        return redirect('admin_kullanici_listesi')
+    
+    return render(request, 'galeri/admin/kullanici_sil.html', {'kullanici': user})

@@ -13,6 +13,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
     {% block extra_head %}{% endblock %}
     <style>
         body {
@@ -62,6 +64,13 @@
                 <i data-feather="users" class="w-5 h-5"></i>
                 <span>Personel</span>
             </a>
+            {% if user.is_superuser %}
+            <a href="{% url 'admin_kullanici_listesi' %}"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i data-feather="user-check" class="w-5 h-5"></i>
+                <span>Kullanıcılar</span>
+            </a>
+            {% endif %}
         </nav>
 
         <div class="p-4 border-t border-gray-800 space-y-2">
@@ -117,6 +126,23 @@
 
     <script src="{% static 'galeri/script.js' %}"></script>
     <script>
+        // CSRF Token'ı JavaScript'te kullanılabilir hale getir
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+        
         feather.replace();
 
         // Mobile Sidebar Toggle

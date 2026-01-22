@@ -4,7 +4,8 @@ from .views import (
     admin_login, admin_logout, admin_dashboard,
     admin_arac_listesi, admin_arac_ekle, admin_arac_duzenle,
     admin_arac_sil, admin_foto_sil, get_modeller_by_marka,
-    admin_personel_listesi, admin_personel_ekle, admin_personel_duzenle, admin_personel_sil
+    admin_personel_listesi, admin_personel_ekle, admin_personel_duzenle, admin_personel_sil,
+    admin_kullanici_listesi, admin_kullanici_ekle, admin_kullanici_duzenle, admin_kullanici_sil
 )
 
 urlpatterns = [
@@ -27,6 +28,12 @@ urlpatterns = [
     path('yonetim/personel/ekle/', admin_personel_ekle, name='admin_personel_ekle'),
     path('yonetim/personel/<int:personel_id>/duzenle/', admin_personel_duzenle, name='admin_personel_duzenle'),
     path('yonetim/personel/<int:personel_id>/sil/', admin_personel_sil, name='admin_personel_sil'),
+    
+    # Kullanıcı Yönetimi (Sadece Superuser)
+    path('yonetim/kullanicilar/', admin_kullanici_listesi, name='admin_kullanici_listesi'),
+    path('yonetim/kullanici/ekle/', admin_kullanici_ekle, name='admin_kullanici_ekle'),
+    path('yonetim/kullanici/<int:user_id>/duzenle/', admin_kullanici_duzenle, name='admin_kullanici_duzenle'),
+    path('yonetim/kullanici/<int:user_id>/sil/', admin_kullanici_sil, name='admin_kullanici_sil'),
     
     # API Endpoints
     path('api/modeller/<int:marka_id>/', get_modeller_by_marka, name='get_modeller_by_marka'),
